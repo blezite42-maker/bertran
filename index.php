@@ -2,10 +2,7 @@
 session_start();
 
 // Database connection
-$conn = new mysqli("localhost", "root", "", "bertran");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once 'db_connect.php';
 
 // Handle search
 $search = isset($_GET['search']) ? $conn->real_escape_string($_GET['search']) : '';

@@ -1,7 +1,7 @@
 <?php
 // add-food.php
 session_start();
-include 'includes/db_connect.php';
+require_once 'db_connect.php';
 
 // Create images folder if it doesn't exist
 $imgDir = __DIR__ . '/images';

@@ -1,12 +1,11 @@
 -- ============================================================================
--- Database Schema for Bertran Food Ordering System
+-- Database Schema for Food Ordering System
 -- Complete schema with all features: User Management, Orders, Payments, 
 -- Notifications, Product Management, and Admin Panel
+-- 
+-- USAGE: Select your database first, then run this schema file
+-- Example: USE your_database_name; then source this file
 -- ============================================================================
-
--- Create database if not exists
-CREATE DATABASE IF NOT EXISTS `bertran` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `bertran`;
 
 -- ============================================================================
 -- USERS TABLE
@@ -154,10 +153,12 @@ ON DUPLICATE KEY UPDATE `name`=`name`;
 -- ============================================================================
 -- NOTES
 -- ============================================================================
--- 1. All tables use utf8mb4 charset for full Unicode support
--- 2. Foreign keys ensure referential integrity
--- 3. Indexes are added for frequently queried columns
--- 4. Orders table supports both legacy single-item orders and new multi-item cart orders
--- 5. Notifications can be user-specific or admin-wide (user_id = NULL)
--- 6. Payment integration fields (zeno_order_id, zeno_transaction_id) support Zeno Pay
--- 7. All timestamps use CURRENT_TIMESTAMP for automatic date tracking
+-- 1. This schema is database-agnostic - select your database before running
+--    Example: USE your_database_name; then source this file
+-- 2. All tables use utf8mb4 charset for full Unicode support
+-- 3. Foreign keys ensure referential integrity
+-- 4. Indexes are added for frequently queried columns
+-- 5. Orders table supports both legacy single-item orders and new multi-item cart orders
+-- 6. Notifications can be user-specific or admin-wide (user_id = NULL)
+-- 7. Payment integration fields (zeno_order_id, zeno_transaction_id) support Zeno Pay
+-- 8. All timestamps use CURRENT_TIMESTAMP for automatic date tracking
