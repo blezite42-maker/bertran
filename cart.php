@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'db_connect.php';
 
 // Add to cart
 if (isset($_POST['add_to_cart'])) {
@@ -29,6 +30,16 @@ if (isset($_POST['add_to_cart'])) {
 if (isset($_GET['remove'])) {
     unset($_SESSION['cart'][$_GET['remove']]);
     $_SESSION['cart'] = array_values($_SESSION['cart']);
+}
+
+// Fetch transport modules
+$transport_query = "SELECT * FROM transport_modules WHERE status = 'active' ORDER BY price ASC";
+$transport_result = $conn->query($transport_query);
+$transport_modules = [];
+if ($transport_result && $transport_result->num_rows > 0) {
+    while ($row = $transport_result->fetch_assoc()) {
+        $transport_modules[] = $row;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -90,28 +101,30 @@ if (isset($_GET['remove'])) {
 
 <a class="continue" href="index.php">← Continue Shopping</a>
 
-
-
+<?php if (!empty($_SESSION['cart'])): ?>
+<div style="margin-top:30px; background:white; padding:20px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+    <div style="display:flex; justify-content:space-between; padding:15px; background:#f0f0f0; border-radius:5px; margin-bottom:20px;">
+        <div>
+            <strong>Subtotal:</strong>
+            <span><?php echo number_format($grand_total); ?> Tsh</span>
+        </div>
+    </div>
+    
+    <div style="margin-top:20px;">
+        <?php if (!isset($_SESSION['user_id'])): ?>
+            <a href="register.php" style="text-decoration:none; display:inline-block; width:100%;">
+                <button type="button" style="width:100%; background:#28a745;color:white;padding:12px 20px;border:none;border-radius:5px;cursor:pointer;font-size:16px;font-weight:bold;">Login to Checkout</button>
+            </a>
+        <?php else: ?>
+            <a href="checkout.php" style="text-decoration:none; display:inline-block; width:100%;">
+                <button type="button" style="width:100%; background:#28a745;color:white;padding:12px 20px;border:none;border-radius:5px;cursor:pointer;font-size:16px;font-weight:bold;">Proceed to Checkout</button>
+            </a>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 </body>
 </html>
-
-<?php
-
-?>
-
-<div style="margin-top:20px;">
-    <?php if (!isset($_SESSION['user_id'])): ?>
-        <a href="register.php" style="text-decoration:none;">
-            <button style="background:#28a745;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">Pay Now</button>
-        </a>
-        <a href="register.php" style="text-decoration:none;">
-            <button style="background:#ffc107;color:black;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">Pay Later</button>
-        </a>
-    <?php else: ?>
-        <button onclick="alert('Proceeding to payment...')" style="background:#28a745;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">Pay Now</button>
-        <button onclick="alert('Order saved for later payment')" style="background:#ffc107;color:black;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">Pay Later</button>
-    <?php endif; ?>
-</div>
 
 

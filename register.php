@@ -4,7 +4,7 @@ require_once "db_connect.php";
 
 $error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username     = trim($_POST['username']);
+    $username     = trim($_POST['name'] ?? $_POST['username'] ?? '');
     $email    = trim($_POST['email']);
     $phone    = trim($_POST['phone']);
     $password = trim($_POST['password']);
@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($stmt->execute()) {
     $_SESSION['user_id']  = $conn->insert_id;
     $_SESSION['username'] = $username; // or $name, depending on your form
-    header("Location: payment.php"); // redirect to payment page
+    header("Location: index.php"); // redirect to home page
     exit();
 } else {
     $error = "Error creating account. (" . $conn->error . ")";

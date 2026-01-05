@@ -53,6 +53,18 @@ img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
 <div class="container">
     <h1>Manage Menu</h1>
 
+    <?php if (isset($_SESSION['success_message'])): ?>
+        <div style="background: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <?php echo htmlspecialchars($_SESSION['success_message']); unset($_SESSION['success_message']); ?>
+        </div>
+    <?php endif; ?>
+    
+    <?php if (isset($_SESSION['error_message'])): ?>
+        <div style="background: #f8d7da; color: #842029; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <?php echo htmlspecialchars($_SESSION['error_message']); unset($_SESSION['error_message']); ?>
+        </div>
+    <?php endif; ?>
+
     <?php if (isset($_SESSION['admin_id'])): ?>
         <a href="add_menu.php" class="add-btn">+ Add New Menu</a>
     <?php endif; ?>
