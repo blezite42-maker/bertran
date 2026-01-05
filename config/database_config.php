@@ -17,7 +17,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'bertran'); // TODO: Change this to your actual database name
+define('DB_NAME', 'database_schema'); // TODO: Change this to your actual database name
 
 // For production, you can use environment variables:
 // define('DB_NAME', getenv('DB_NAME') ?: 'your_database_name');

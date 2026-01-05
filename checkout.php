@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $transport_cost = isset($_POST['transport_cost']) ? (float)$_POST['transport_cost'] : 0;
     $grand_total = isset($_POST['grand_total']) ? (float)$_POST['grand_total'] : 0;
     $delivery_address = isset($_POST['delivery_address']) ? trim($_POST['delivery_address']) : '';
+    $payment_phone = isset($_POST['payment_phone']) ? trim($_POST['payment_phone']) : '';
+    $save_phone = isset($_POST['save_phone']) ? true : false;
     
     // Get user information
     $user_id = $_SESSION['user_id'];
@@ -40,14 +42,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "User not found.";
     } elseif (!$transport_id) {
         $error = "Please select a delivery method.";
+    } elseif (empty($payment_phone)) {
+        $error = "Please enter your phone number for payment.";
     } else {
-        // Format phone number for Zeno Pay
-        $buyerPhone = PhoneFormatter::formatForZeno($user['phone']);
-        $buyerName = $user['username'];
-        $buyerEmail = $user['email'] ?: ($buyerPhone . '@forexbot.com');
-        
-        // Prepare order items as JSON
-        $order_items = json_encode($_SESSION['cart']);
+        // Validate phone number (basic validation)
+        $payment_phone = preg_replace('/[^0-9+]/', '', $payment_phone);
+        if (strlen($payment_phone) < 9) {
+            $error = "Please enter a valid phone number.";
+        } else {
+            // Format phone number for Zeno Pay
+            $buyerPhone = PhoneFormatter::formatForZeno($payment_phone);
+            $buyerName = $user['username'];
+            $buyerEmail = $user['email'] ?: ($buyerPhone . '@forexbot.com');
+            
+            // Optionally save phone number to user profile
+            if ($save_phone && $payment_phone !== $user['phone']) {
+                $update_stmt = $conn->prepare("UPDATE users SET phone = ? WHERE user_id = ?");
+                $update_stmt->bind_param("si", $payment_phone, $user_id);
+                $update_stmt->execute();
+                $update_stmt->close();
+            }
+            
+            // Prepare order items as JSON
+            $order_items = json_encode($_SESSION['cart']);
         
         try {
             // Initiate payment with Zeno Pay
@@ -112,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) {
             $error = "Payment error: " . $e->getMessage();
         }
+        }
     }
 }
 
@@ -120,6 +138,15 @@ $subtotal = 0;
 foreach ($_SESSION['cart'] as $item) {
     $subtotal += $item['price'] * $item['qty'];
 }
+
+// Get user information for form pre-fill
+$user_id = $_SESSION['user_id'];
+$user_stmt = $conn->prepare("SELECT username, email, phone FROM users WHERE user_id = ?");
+$user_stmt->bind_param("i", $user_id);
+$user_stmt->execute();
+$user_result = $user_stmt->get_result();
+$user = $user_result->fetch_assoc();
+$user_stmt->close();
 
 // Get transport modules
 $transport_query = "SELECT * FROM transport_modules WHERE status = 'active' ORDER BY price ASC";
@@ -252,6 +279,18 @@ if ($transport_result && $transport_result->num_rows > 0) {
             padding: 10px;
             border-bottom: 1px solid #eee;
         }
+        .phone-help {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 13px;
+            color: #084298;
+        }
+        .phone-help strong {
+            display: block;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -275,6 +314,29 @@ if ($transport_result && $transport_result->num_rows > 0) {
                         <span><?php echo number_format($item['price'] * $item['qty']); ?> Tsh</span>
                     </div>
                 <?php endforeach; ?>
+            </div>
+            
+            <div class="form-group">
+                <label>Payment Phone Number *</label>
+                <input type="text" 
+                       name="payment_phone" 
+                       id="payment_phone"
+                       placeholder="e.g. 0712345678 or 255712345678" 
+                       value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>"
+                       required
+                       pattern="[0-9+\s\-()]+"
+                       title="Enter a valid phone number"
+                       oninput="formatPhoneNumber(this)">
+                <div class="phone-help">
+                    <strong>ℹ️ Important:</strong>
+                    This phone number will be used for Zeno Pay payment. 
+                    Make sure it's the number linked to your mobile money account (M-Pesa, Airtel Money, etc.).
+                    <br><small>Format: 0712345678 or 255712345678</small>
+                </div>
+                <label style="margin-top: 10px; display: flex; align-items: center; cursor: pointer; font-weight: normal;">
+                    <input type="checkbox" name="save_phone" value="1" style="width: auto; margin-right: 8px;">
+                    <span>Save this phone number to my profile for future orders</span>
+                </label>
             </div>
             
             <div class="form-group">
@@ -339,6 +401,37 @@ if ($transport_result && $transport_result->num_rows > 0) {
         document.getElementById('grandTotal').textContent = total.toLocaleString() + ' Tsh';
         document.getElementById('grand_total_input').value = total;
     }
+    
+    function formatPhoneNumber(input) {
+        // Remove all non-digit characters except +
+        let value = input.value.replace(/[^\d+]/g, '');
+        
+        // Auto-format: if starts with 0, keep it; if starts with 255, keep it; otherwise add 255
+        if (value.length > 0 && !value.startsWith('255') && !value.startsWith('0') && !value.startsWith('+')) {
+            // Don't auto-format, let user type
+        }
+        
+        input.value = value;
+    }
+    
+    // Validate phone number on form submit
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        const phoneInput = document.getElementById('payment_phone');
+        const phoneValue = phoneInput.value.replace(/[^\d]/g, '');
+        
+        if (phoneValue.length < 9) {
+            e.preventDefault();
+            alert('Please enter a valid phone number (at least 9 digits).');
+            phoneInput.focus();
+            return false;
+        }
+        
+        // Show confirmation
+        if (!confirm('Confirm payment with phone number: ' + phoneInput.value + '?')) {
+            e.preventDefault();
+            return false;
+        }
+    });
     </script>
 </body>
 </html>
